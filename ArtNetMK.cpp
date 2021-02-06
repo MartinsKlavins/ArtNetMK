@@ -1,12 +1,12 @@
 /* Mārtiņš Kļaviņš */
 
-#include <FingerWing_config.h>
+#include <config.h>
 #include <ArtNetMK.h>
 
 
 
 #if defined(ARDUINO_SAMD_ZERO) || defined(ESP8266) || defined(ESP32)
-    WiFiUDP Udp;
+    	WiFiUDP Udp;
 	WiFiUDP udp_slave1;
 	WiFiUDP udp_slave2;
 	WiFiUDP udp_slave3;
@@ -120,7 +120,7 @@ uint8_t* get_myIP(){
 			#ifdef all_WIZnets
 				W5100.setSubnetMask(Subnet_Mask);		// for w5500
 			#else
-				Ethernet.setSubnetMask(Subnet_Mask);	// for w5100
+				Ethernet.setSubnetMask(Subnet_Mask);		// for w5100
 			#endif
 		}
 	}
@@ -478,7 +478,7 @@ void ArtNet_stop(){
 	#ifdef all_WIZnets
 		W5100.setSubnetMask(Subnet_Mask);		// for w5500
 	#else
-		Ethernet.setSubnetMask(Subnet_Mask);	// for w5100
+		Ethernet.setSubnetMask(Subnet_Mask);		// for w5100
 	#endif
 #endif
 
