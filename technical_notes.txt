@@ -1,0 +1,29 @@
+
+=================================================== Hardware related =====================================================
+
+library			supported	comments
+			network
+			interfaces
+--------------------------------------------------------------------------------------------------------------------------
+<Ethernet.h>		W5100		* be careful with power supply for dev.board, some need 3.3v instead of written 5V
+<EthernetUdp.h>				* max socket count = 4 (see ethernet.h for configuration)
+					* chip uses SPI for comunication (SPI.h already included in w5100.h)
+--------------------------------------------------------------------------------------------------------------------------
+<Ethernet_STM.h>	W5200,W5500 	* check w5500.h, w5200.h files for socket count
+<EthernetUdp.h>				* also check w5100.h for selected hardware
+--------------------------------------------------------------------------------------------------------------------------
+<ESP8266WiFi.h>
+<WiFiUdp.h>
+--------------------------------------------------------------------------------------------------------------------------
+
+
+
+=================================================== Ethernet related ======================================================
+
+Packet size ( ~ 572 bytes max )
+
+OSI model	:	physical;	data link;	network;	transport;
+----------------------------------------------------------------------------------
+protocol	:			eth_frame	IPv4		UDP		Art-Net		DMX512
+header bytes	:			14		20		8		18
+data bytes	:											512
