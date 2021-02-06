@@ -1,0 +1,53 @@
+#######################################
+# Syntax Coloring Map for ArtNetMK
+#######################################
+
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+
+set_IP			KEYWORD2
+set_MAC			KEYWORD2
+set_Broadcast		KEYWORD2
+set_destIP		KEYWORD2
+ClassA_network		KEYWORD2
+get_myIP		KEYWORD2
+get_hostIP		KEYWORD2
+ArtNet_beginETH		KEYWORD2
+ArtNet_beginETH_dhcp	KEYWORD2
+ArtNet_beginWiFi	KEYWORD2
+ArtNet_stop		KEYWORD2
+ArtNet_read		KEYWORD2
+ArtNet_write_DMX	KEYWORD2
+ArtNet_direct_DMX	KEYWORD2
+ArtNet_write_nzs	KEYWORD2
+ArtNet_discover		KEYWORD2
+set_Port		KEYWORD2
+set_DMXcallback		KEYWORD2
+set_NZScallback		KEYWORD2
+get_DmxFrame		KEYWORD2
+get_Universe		KEYWORD2
+
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+port1	LITERAL1
+port2	LITERAL1
+port3	LITERAL1
+port4	LITERAL1
+Default	LITERAL1
+Custom	LITERAL1
