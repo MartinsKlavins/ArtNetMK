@@ -8,9 +8,7 @@
 // --------------------------- MCU related -------------------------
 // uncomment your choice for devices:
 
-//#define _kind_of_ARDUINO
-#define all_WIZnets
-//#define _kind_of_ESP
+#define _kind_of_ARDUINO
 
 
 // --------------------------- Art-Net related ---------------------
