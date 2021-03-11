@@ -6,11 +6,8 @@ library			supported	comments
 			interfaces
 --------------------------------------------------------------------------------------------------------------------------
 <Ethernet.h>		W5100		* be careful with power supply for dev.board, some need 3.3v instead of written 5V
-<EthernetUdp.h>				* max socket count = 4 (see ethernet.h for configuration)
-					* chip uses SPI for comunication (SPI.h already included in w5100.h)
---------------------------------------------------------------------------------------------------------------------------
-<Ethernet_STM.h>	W5200,W5500 	* check w5500.h, w5200.h files for socket count
-<EthernetUdp.h>				* also check w5100.h for selected hardware
+<EthernetUdp.h>		W5200,W5500	* max socket count 4 - 8 (see ethernet.h for configuration)
+Ethernet-2.0.0				* chip uses SPI for comunication (SPI.h already included in w5100.h)
 --------------------------------------------------------------------------------------------------------------------------
 <ESP8266WiFi.h>
 <WiFiUdp.h>
