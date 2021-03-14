@@ -22,8 +22,8 @@
 #define OEM				        0xffff	// OEM code for ArtNet product (OEMunknown=0x00FF)
 // ---- device configuration
 #define DMX_CHANNELS	    24			// dmx512 channel count in one frame
-#define en_read_DMX		    1			  // enable to receive dmx512
-#define en_reply_msg	    0			  // enable to replay to discovery messages
+#define en_read_DMX		    true	  // enable to receive dmx512
+#define en_reply_msg	    false		// enable to replay to discovery messages
 #define PAYLOAD			      8			  // NZS channel count
 #define STATUS1			      0xd0		// 11-01-0-0-0-0 = 0xd0 (indicators normalMode - set by frontPanel - 0 - normalBoot - RDMon - UBEAoff)
 #define PORTSc			      0x0001	// port count
