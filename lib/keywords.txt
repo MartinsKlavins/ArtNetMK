@@ -7,29 +7,29 @@
 # Datatypes (KEYWORD1)
 #######################################
 
-NODE_port   KEYWORD1
-DHCP_mode   KEYWORD1
+NODE_port       KEYWORD1
+DHCP_mode       KEYWORD1
+NODE_network    KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
 
-set_IP			KEYWORD2
-set_MAC			KEYWORD2
-set_destIP		KEYWORD2
+set_IP			    KEYWORD2
+set_MAC			    KEYWORD2
+set_destIP		    KEYWORD2
 ClassA_network		KEYWORD2
-get_myIP		KEYWORD2
-get_hostIP		KEYWORD2
+get		            KEYWORD2
 ArtNet_beginETH		KEYWORD2
 ArtNet_beginWiFi	KEYWORD2
-ArtNet_stop		KEYWORD2
-ArtNet_read		KEYWORD2
+ArtNet_stop		    KEYWORD2
+ArtNet_read		    KEYWORD2
 ArtNet_write_DMX	KEYWORD2
 ArtNet_direct_DMX	KEYWORD2
 ArtNet_write_nzs	KEYWORD2
 ArtNet_discover		KEYWORD2
-set_Port		KEYWORD2
+set_Port		    KEYWORD2
 set_DMXcallback		KEYWORD2
 set_NZScallback		KEYWORD2
 get_DmxFrame		KEYWORD2
@@ -51,3 +51,6 @@ port3		LITERAL1
 port4		LITERAL1
 NO_DHCP     LITERAL1
 DHCP        LITERAL1
+myIP        LITERAL1
+mySUBNET    LITERAL1
+hostIP      LITERAL1
