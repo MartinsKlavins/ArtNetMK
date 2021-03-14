@@ -1,6 +1,6 @@
 /* Mārtiņš Kļaviņš */
 
-#include <FingerWing_config.h>
+#include <config.h>
 #include <ArtNetMK.h>
 
 
