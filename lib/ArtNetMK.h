@@ -25,6 +25,9 @@
 // network
 // -------
 const uint8_t limited_BC[4] = { 255, 255, 255, 255 };
+#define CLASS_A(x) 	(1 <= x) && (x <= 127)
+#define CLASS_B(x)	(128 <= x) && (x <= 191)
+#define CLASS_C(x)	(192 <= x) && (x <= 223)
 // OpCodes
 // -------
 #define ART_POLL 			0x2000
@@ -54,6 +57,11 @@ typedef enum {
 	port3,
 	port4
 } NODE_port;
+typedef enum {
+	myIP,
+	mySUBNET,
+	hostIP
+} NODE_network;
 
 struct artnet_dmx {
 	uint8_t  id[8];						// ART_NET_ID	(0x41 0x72 0x74 0x2d 0x4e 0x65 0x74 0x00)
@@ -147,15 +155,14 @@ void set_IP( uint8_t octet1, uint8_t octet2, uint8_t octet3, uint8_t octet4 );
 void set_MAC( uint8_t oui1, uint8_t oui2, uint8_t oui3, uint8_t nic1, uint8_t nic2, uint8_t nic3 );
 void set_destIP( uint8_t octet1, uint8_t octet2, uint8_t octet3, uint8_t octet4 );
 void ClassA_network();
-uint8_t* get_myIP();
-uint8_t* get_hostIP();
+uint8_t* get( NODE_network );
 
 void ArtNet_beginETH( DHCP_mode );
 void ArtNet_beginWiFi();
 void ArtNet_stop();
 
 uint16_t ArtNet_read();
-uint8_t ArtNet_discover();
+void ArtNet_discover();
 void set_Port( NODE_port, uint16_t Universe );
 
 void set_DMXcallback( void (*pointer_to_function)( uint16_t, uint8_t* ) );
