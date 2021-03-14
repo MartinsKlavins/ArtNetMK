@@ -1,5 +1,5 @@
 # ArtNetMK
-Art-Net library for supporting DMX512 over ethernet for Arduino and ESP boards. Alongside basic DMX512 packet support, here is some notable features.
+Art-Net library for supporting DMX512 over ethernet for Arduino, Teensy and ESP boards. Alongside basic DMX512 packet support, here is some notable features.
 
 ### Notable features
 * Auto-configuration and support for Class A,B,C network
