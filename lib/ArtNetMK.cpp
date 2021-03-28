@@ -1,10 +1,12 @@
 /* Mārtiņš Kļaviņš */
 
-#include <config.h>
+#include <FingerWing_config.h>
 #include <ArtNetMK.h>
 
 
-
+const uint8_t socketCount = 4;
+/* MAX_SOCK_NUM */
+/* check ethernet.h for socket count and buffer sizes */
 #if defined(ARDUINO_SAMD_ZERO) || defined(ESP8266) || defined(ESP32)
     WiFiUDP Udp;
 	WiFiUDP udp_slave1;
@@ -20,12 +22,13 @@
 #endif
 
 
+
 // definitions, declarations ---------------------------------------------------------------------------------
 
 // Art-Net variables
 // -----------------
 uint8_t artnetPacket[MAX_BUFFER_ARTNET];
-uint16_t packetSize;			// byte count in packet
+uint16_t packetSize;							// byte count in packet
 uint16_t opcode;
 uint16_t protVersion;
 uint8_t sequence;
@@ -38,13 +41,14 @@ uint8_t dmxCallback = 0;
 // network variables
 // -----------------
 uint8_t IPaddress[4];
-uint8_t BCaddress[4];			// directed broadcast
+uint8_t BCaddress[4];							// directed broadcast
 uint8_t MACaddress[6];
 uint8_t Subnet_Mask[4];
-uint8_t local_ip[4];			// device IP, important if IP is assigned with DHCP, not set_IP()
-uint8_t remote_ip[4];			// Source IP, who sends ArtNet
-uint8_t dest_ip[4];				// destination IP, for unicast mode
-uint32_t addressPoll[4] = {0};
+uint8_t local_ip[4];							// device IP, important if IP is assigned with DHCP, not set_IP()
+uint8_t remote_ip[4];							// Source IP, who sends ArtNet
+uint8_t dest_ip[4];								// destination IP, for unicast mode
+uint32_t addressPoll[socketCount] = {0};
+
 
 typedef enum {
 	BROADCAST,
@@ -73,11 +77,11 @@ void set_Subnet( uint8_t octet1, uint8_t octet2, uint8_t octet3, uint8_t octet4 
 	Subnet_Mask[3] = octet4;
 }
 void netCLASS_config( NET_address config, void (*ptr_to_userFunction)( uint8_t, uint8_t, uint8_t, uint8_t ) ){
-	uint8_t netID = IPaddress[0];
+	uint8_t netID = local_ip[0];
 	if ( config == BROADCAST ){
-    	if ( CLASS_A(netID) ) (*ptr_to_userFunction)( IPaddress[0], 255, 255, 255 );
-    	else if ( CLASS_B(netID) ) (*ptr_to_userFunction)( IPaddress[0], IPaddress[1], 255, 255 );
-    	else if ( CLASS_C(netID) ) (*ptr_to_userFunction)( IPaddress[0], IPaddress[1], IPaddress[2], 255 );
+		if ( CLASS_A(netID) ) (*ptr_to_userFunction)( local_ip[0], 255, 255, 255 );
+    	else if ( CLASS_B(netID) ) (*ptr_to_userFunction)( local_ip[0], local_ip[1], 255, 255 );
+    	else if ( CLASS_C(netID) ) (*ptr_to_userFunction)( local_ip[0], local_ip[1], local_ip[2], 255 );
 	}
 	if ( config == NETMASK ){
 		if ( CLASS_A(netID) ) (*ptr_to_userFunction)( 255, 0, 0, 0 );
@@ -170,7 +174,8 @@ void ArtNet_beginWiFi(){
 			
 	Udp.begin(ART_NET_PORT);
 }
-	
+
+
 
 // functions -------------------- Art-Net --------------------------------------------------------------------
 /* returns OpCode from received ArtNet packet or 0 if its not ArtNet.										*/
@@ -234,7 +239,7 @@ uint16_t ArtNet_read(){
 		
 		Udp.read(artnetPacket, MAX_BUFFER_ARTNET);
 		// Check that packetID is "Art-Net" else ignore
-		for( uint8_t i = 0 ; i < 8 ; i++ ){
+		for ( uint8_t i = 0 ; i < 8 ; i++ ){
 			if ( artnetPacket[i] != ART_NET_ID[i] ) return 0;
 		}
 		/* precedence - first goes 9th packet bitshift and then OR	*/
@@ -257,14 +262,16 @@ uint16_t ArtNet_read(){
 			return ART_DMX;
 		}
 		if ( opcode == ART_POLL && en_reply_msg ){
-			if ( remote_ip[0] < 255 ){
-				// broadcast packet to all hosts on a defined network
-				// (makes it discoverable outside LAN)
+			if ( 	CLASS_A(local_ip[0]) == CLASS_A(remote_ip[0]) ||
+					CLASS_B(local_ip[0]) == CLASS_B(remote_ip[0]) ||
+					CLASS_C(local_ip[0]) == CLASS_C(remote_ip[0])	){
+				/* broadcast packet to all hosts on a defined network (makes it discoverable outside LAN) */
 				Udp.beginPacket(BCaddress, ART_NET_PORT);
 				Udp.write((uint8_t *)&ArtPollReply, sizeof(ArtPollReply));
 				Udp.endPacket();
 			}
 			else {
+				/* broadcast packet in LAN (makes it discoverable regardless to IP) */
 				Udp.beginPacket(limited_BC, ART_NET_PORT);
 				Udp.write((uint8_t *)&ArtPollReply, sizeof(ArtPollReply));
 				Udp.endPacket();
@@ -296,7 +303,11 @@ uint16_t ArtNet_read(){
 			uint8_t subswitch = artnetPacket[104] << 4;
 			// BindIndex, ShortName, LongName, Command are ignored
 			incomingUniverse = (netswitch << 8) | (subswitch | universe);
-				
+			
+			Udp.beginPacket(BCaddress, ART_NET_PORT);
+			Udp.write((uint8_t *)&ArtPollReply, sizeof(ArtPollReply));
+			Udp.endPacket();
+
 			return ART_ADDRESS;
 		}
 		if ( opcode == ART_IP_PROG ){
@@ -310,15 +321,15 @@ uint16_t ArtNet_read(){
 				return ART_IP_PROG;
 			}
 			if ( command == 0 ){
-				for( uint8_t i = 0; i < 8; i++ ){
+				for ( uint8_t i = 0; i < 8; i++ ){
 					ArtIpReply.id[i]  	= ART_NET_ID[i];
 				}
 				ArtIpReply.opCode 		= ART_IP_PROG_REPLY;
 				ArtIpReply.protVersion 	= prot_version << 8;
-				for( uint8_t i = 0; i < 4; i++ ){
+				for ( uint8_t i = 0; i < 4; i++ ){
 					ArtIpReply.ip[i] 	= local_ip[i];
 				}
-				for( uint8_t i = 0; i < 4; i++ ){
+				for ( uint8_t i = 0; i < 4; i++ ){
 					ArtIpReply.subnet[i] = Subnet_Mask[i];
 				}
 				ArtIpReply.status		= 0;
@@ -339,17 +350,13 @@ uint16_t ArtNet_read(){
 			IP = (IP << 8) | remote_ip[2];
 			IP = (IP << 8) | remote_ip[3];
 				
-			for ( uint8_t i = 0; i < 4; i++ ){
+			for ( uint8_t i = 0; i < socketCount; i++ ){
 				/* stop if IP already exist */
 				if ( addressPoll[i] == IP ) break;
 				/* renember position if empty space */
-				/* i + 1 is on purpose, even if 0th possition is empty, variable 'empty' is true */
-				if ( addressPoll[i] == 0 ) empty = i + 1;
-				/* write IP in empty space */
-				if ( i == 3 && empty ){
-					addressPoll[empty-1] = IP;
-					empty = 0;
-				}
+				if ( addressPoll[i] == 0 ) empty = i + 1;			// i + 1 is on purpose, even if 0th possition is empty, variable 'empty' will be true
+				/* at the end of loop, write IP in empty space */
+				if ( i == (socketCount-1) && empty ) addressPoll[empty-1] = IP;
 			}
 			
 			return ART_POLL_REPLY;
@@ -359,7 +366,7 @@ uint16_t ArtNet_read(){
 	
 	return 0;
 }
-void ArtNet_write_DMX( uint8_t DmxFrame[DMX_CHANNELS] ){
+void ArtNet_write_DMX( uint8_t* DmxFrame ){
 	for( uint8_t i = 0; i < 8; i++ ){
 		ArtDmx.id[i]	= ART_NET_ID[i];
 	}
@@ -368,14 +375,14 @@ void ArtNet_write_DMX( uint8_t DmxFrame[DMX_CHANNELS] ){
 	ArtDmx.sequence 	= 0;
 	ArtDmx.physical 	= 0;
 	ArtDmx.portAddress 	= PortAddress.NNSU;
-	ArtDmx.dmxDataLenght = DMX_CHANNELS << 8; 	// 0x0018 << 8 (legal until channel count smaller than 255)
-	for( uint8_t i = 0; i < DMX_CHANNELS; i++ ){
-		ArtDmx.dmxData[i] = DmxFrame[i];
+	ArtDmx.dmxDataLenght = (DMX_CHANNELS << 8) + (DMX_CHANNELS >> 8);
+	for ( uint8_t i = 0; i < DMX_CHANNELS; i++ ){
+		ArtDmx.dmxData[i] = *(DmxFrame+i);
 	}
 	
-	for( uint8_t i = 0; i < 4; i++ ){
+	for ( uint8_t i = 0; i < socketCount; i++ ){
 		if ( addressPoll[i] == 0 ) continue;
-			
+		
 		uint8_t IP[4];
 		IP[0] = addressPoll[i] >> 24;
 		IP[1] = addressPoll[i] >> 16;
@@ -388,8 +395,8 @@ void ArtNet_write_DMX( uint8_t DmxFrame[DMX_CHANNELS] ){
 		if ( !ok ) addressPoll[i] = 0;
 	}
 }
-uint8_t ArtNet_direct_DMX( uint8_t DmxFrame[DMX_CHANNELS] ){
-	for( uint8_t i = 0; i < 8; i++ ){
+uint8_t ArtNet_direct_DMX( uint8_t* DmxFrame ){
+	for ( uint8_t i = 0; i < 8; i++ ){
 		ArtDmx.id[i]	= ART_NET_ID[i];
 	}
 	ArtDmx.opCode		= ART_DMX;
@@ -397,9 +404,9 @@ uint8_t ArtNet_direct_DMX( uint8_t DmxFrame[DMX_CHANNELS] ){
 	ArtDmx.sequence 	= 0;
 	ArtDmx.physical 	= 0;
 	ArtDmx.portAddress 	= PortAddress.NNSU;
-	ArtDmx.dmxDataLenght = DMX_CHANNELS << 8; 	// 0x0018 << 8 (legal until channel count smaller than 255)
-	for( uint8_t i = 0; i < DMX_CHANNELS; i++ ){
-		ArtDmx.dmxData[i] = DmxFrame[i];
+	ArtDmx.dmxDataLenght = (DMX_CHANNELS << 8) + (DMX_CHANNELS >> 8);
+	for ( uint8_t i = 0; i < DMX_CHANNELS; i++ ){
+		ArtDmx.dmxData[i] = *(DmxFrame+i);
 	}
 		
 	uint8_t ok = Udp.beginPacket(dest_ip, ART_NET_PORT);
@@ -429,22 +436,23 @@ uint8_t ArtNet_write_nzs( uint8_t stamp, uint8_t frame_ID, uint8_t nzsFrame[PAYL
 	return 0;
 }
 void ArtNet_discover(){
-	for( uint8_t i = 0; i < 8; i++ ){
-		ArtPoll.id[i]	= ART_NET_ID[i];
-	}
-	ArtPoll.opCode		= ART_POLL;
-	ArtPoll.protVersion = prot_version << 8;
-	ArtPoll.talkToMe	= discoveryCONFIG;
-	ArtPoll.priority	= 0;
+	if ( STYLE == 1){
+		for ( uint8_t i = 0; i < 8; i++ ){
+			ArtPoll.id[i]	= ART_NET_ID[i];
+		}
+		ArtPoll.opCode		= ART_POLL;
+		ArtPoll.protVersion = prot_version << 8;
+		ArtPoll.talkToMe	= discoveryCONFIG;
+		ArtPoll.priority	= 0;
 		
-	// broadcast packet in LAN (makes it discoverable regardless to IP)
-	Udp.beginPacket(limited_BC, ART_NET_PORT);
-	Udp.write((uint8_t *)&ArtPoll, sizeof(ArtPoll));
-	Udp.endPacket();
-        
-	Udp.beginPacket(limited_BC, ART_NET_PORT);
-	Udp.write((uint8_t *)&ArtPollReply, sizeof(ArtPollReply));
-	Udp.endPacket();
+		Udp.beginPacket(limited_BC, ART_NET_PORT);
+		Udp.write((uint8_t *)&ArtPoll, sizeof(ArtPoll));
+		Udp.endPacket();
+			
+		udp_slave1.beginPacket(limited_BC, ART_NET_PORT);
+		udp_slave1.write((uint8_t *)&ArtPollReply, sizeof(ArtPollReply));
+		udp_slave1.endPacket();
+	}
 }
 
 // returns a pointer to the start of the DMX data
