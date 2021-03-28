@@ -25,9 +25,9 @@
 // network
 // -------
 const uint8_t limited_BC[4] = { 255, 255, 255, 255 };
-#define CLASS_A(x) 	(1 <= x) && (x <= 127)
-#define CLASS_B(x)	(128 <= x) && (x <= 191)
-#define CLASS_C(x)	(192 <= x) && (x <= 223)
+#define CLASS_A(x) 	((1 <= x) && (x <= 127))
+#define CLASS_B(x)	((128 <= x) && (x <= 191))
+#define CLASS_C(x)	((192 <= x) && (x <= 223))
 // OpCodes
 // -------
 #define ART_POLL 			0x2000
@@ -47,6 +47,7 @@ const uint8_t limited_BC[4] = { 255, 255, 255, 255 };
 #define prot_version		0x000e
 
 
+
 typedef enum {
 	NO_DHCP,
 	DHCP
@@ -62,6 +63,7 @@ typedef enum {
 	mySUBNET,
 	hostIP
 } NODE_network;
+
 
 struct artnet_dmx {
 	uint8_t  id[8];						// ART_NET_ID	(0x41 0x72 0x74 0x2d 0x4e 0x65 0x74 0x00)
@@ -92,7 +94,7 @@ struct artnet_poll {
 	uint8_t  talkToMe;					// config
 	uint8_t  priority;					// diagnostic messages not implemented
 };
- 
+
 struct artnet_reply {
 	uint8_t  id[8];                 	// "Art-Net "
 	uint16_t opCode;                  	// ART_POLL_REPLY
@@ -149,6 +151,7 @@ struct port_address {					// 0b0NNNNNNNSSSSUUUU = 0xNNSU ; where N - NET, S - Su
 };
 
 
+
 // function declarations
 // ---------------------
 void set_IP( uint8_t octet1, uint8_t octet2, uint8_t octet3, uint8_t octet4 );
@@ -167,8 +170,8 @@ void set_Port( NODE_port, uint16_t Universe );
 
 void set_DMXcallback( void (*pointer_to_function)( uint16_t, uint8_t* ) );
 void set_NZScallback( uint8_t triggToID, void (*pointer_to_function1)( uint8_t* ) );
-void ArtNet_write_DMX( uint8_t DmxFrame[] );
-uint8_t ArtNet_direct_DMX( uint8_t DmxFrame[] );
+void ArtNet_write_DMX( uint8_t* DmxFrame );
+uint8_t ArtNet_direct_DMX( uint8_t* DmxFrame );
 uint8_t ArtNet_write_nzs( uint8_t stamp, uint8_t frame_ID, uint8_t nzsFrame[] );
 uint8_t* get_DmxFrame();
 uint16_t get_Universe();
