@@ -292,6 +292,10 @@ uint16_t ArtNet_read(){
 			return ART_NZS;
 		}
 		if ( opcode == ART_ADDRESS ){
+			/*
+			If universe is updated, changes will not show in pollreply
+			Updated IP will show, as device needs to be restared to reload network
+			*/
 			uint8_t en_artAddress = 0;
 			uint8_t netswitch = artnetPacket[12] & 0x7F;
 			uint8_t universe = artnetPacket[100];
@@ -375,8 +379,8 @@ void ArtNet_write_DMX( uint8_t* DmxFrame ){
 	ArtDmx.sequence 	= 0;
 	ArtDmx.physical 	= 0;
 	ArtDmx.portAddress 	= PortAddress.NNSU;
-	ArtDmx.dmxDataLenght = (DMX_CHANNELS << 8) + (DMX_CHANNELS >> 8);
-	for ( uint8_t i = 0; i < DMX_CHANNELS; i++ ){
+	ArtDmx.dmxDataLenght = ((uint8_t)DMX_CHANNELS << 8) | (DMX_CHANNELS >> 8);
+	for ( uint16_t i = 0; i < DMX_CHANNELS; i++ ){
 		ArtDmx.dmxData[i] = *(DmxFrame+i);
 	}
 	
@@ -404,8 +408,8 @@ uint8_t ArtNet_direct_DMX( uint8_t* DmxFrame ){
 	ArtDmx.sequence 	= 0;
 	ArtDmx.physical 	= 0;
 	ArtDmx.portAddress 	= PortAddress.NNSU;
-	ArtDmx.dmxDataLenght = (DMX_CHANNELS << 8) + (DMX_CHANNELS >> 8);
-	for ( uint8_t i = 0; i < DMX_CHANNELS; i++ ){
+	ArtDmx.dmxDataLenght = ((uint8_t)DMX_CHANNELS << 8) | (DMX_CHANNELS >> 8);
+	for ( uint16_t i = 0; i < DMX_CHANNELS; i++ ){
 		ArtDmx.dmxData[i] = *(DmxFrame+i);
 	}
 		
