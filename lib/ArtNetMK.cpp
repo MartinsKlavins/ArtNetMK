@@ -1,6 +1,6 @@
 /* Mārtiņš Kļaviņš */
 
-#include <FingerWing_config.h>
+#include <config.h>
 #include <ArtNetMK.h>
 
 
@@ -38,6 +38,7 @@ uint16_t dmxDataLength;
 uint8_t payload_id;
 uint8_t select_id;
 uint8_t dmxCallback = 0;
+uint8_t port;
 // network variables
 // -----------------
 uint8_t IPaddress[4];
@@ -49,11 +50,6 @@ uint8_t remote_ip[4];							// Source IP, who sends ArtNet
 uint8_t dest_ip[4];								// destination IP, for unicast mode
 uint32_t addressPoll[socketCount] = {0};
 
-
-typedef enum {
-	BROADCAST,
-	NETMASK
-} NET_address;
 
 struct artnet_reply ArtPollReply;
 struct artnet_dmx ArtDmx;
@@ -75,19 +71,6 @@ void set_Subnet( uint8_t octet1, uint8_t octet2, uint8_t octet3, uint8_t octet4 
 	Subnet_Mask[1] = octet2;
 	Subnet_Mask[2] = octet3;
 	Subnet_Mask[3] = octet4;
-}
-void netCLASS_config( NET_address config, void (*ptr_to_userFunction)( uint8_t, uint8_t, uint8_t, uint8_t ) ){
-	uint8_t netID = local_ip[0];
-	if ( config == BROADCAST ){
-		if ( CLASS_A(netID) ) (*ptr_to_userFunction)( local_ip[0], 255, 255, 255 );
-    	else if ( CLASS_B(netID) ) (*ptr_to_userFunction)( local_ip[0], local_ip[1], 255, 255 );
-    	else if ( CLASS_C(netID) ) (*ptr_to_userFunction)( local_ip[0], local_ip[1], local_ip[2], 255 );
-	}
-	if ( config == NETMASK ){
-		if ( CLASS_A(netID) ) (*ptr_to_userFunction)( 255, 0, 0, 0 );
-    	else if ( CLASS_B(netID) ) (*ptr_to_userFunction)( 255, 255, 0, 0 );
-    	else if ( CLASS_C(netID) ) (*ptr_to_userFunction)( 255, 255, 255, 0 );
-	}
 }
 
 
@@ -156,8 +139,19 @@ uint8_t* get( NODE_network find ){
 			udp_slave3.begin(ART_NET_PORT);
 		}
 
-		netCLASS_config(BROADCAST, &set_Broadcast);
-		netCLASS_config(NETMASK, &set_Subnet);
+		uint8_t netID = local_ip[0];
+		if ( CLASS_A(netID) ){
+			set_Broadcast( local_ip[0], 255, 255, 255 );
+			set_Subnet( 255, 0, 0, 0 );
+		}
+    	else if ( CLASS_B(netID) ){
+			set_Broadcast( local_ip[0], local_ip[1], 255, 255 );
+			set_Subnet( 255, 255, 0, 0 );
+    	}
+		else if ( CLASS_C(netID) ){
+			set_Broadcast( local_ip[0], local_ip[1], local_ip[2], 255 );
+			set_Subnet( 255, 255, 255, 0 );
+		}
 		Ethernet.setSubnetMask(Subnet_Mask);
 	}
 
@@ -181,6 +175,8 @@ void ArtNet_beginWiFi(){
 /* returns OpCode from received ArtNet packet or 0 if its not ArtNet.										*/
 	
 void set_Port( NODE_port selected, uint16_t Universe ){
+	port = selected;
+	
 	PortAddress.NNSU	= Universe;
 	PortAddress.NN		= (Universe >> 8) & 0x7F;
 	PortAddress.S		= ((uint8_t)Universe >> 4) & 0x0F; 
@@ -292,10 +288,6 @@ uint16_t ArtNet_read(){
 			return ART_NZS;
 		}
 		if ( opcode == ART_ADDRESS ){
-			/*
-			If universe is updated, changes will not show in pollreply
-			Updated IP will show, as device needs to be restared to reload network
-			*/
 			uint8_t en_artAddress = 0;
 			uint8_t netswitch = artnetPacket[12] & 0x7F;
 			uint8_t universe = artnetPacket[100];
@@ -307,6 +299,11 @@ uint16_t ArtNet_read(){
 			uint8_t subswitch = artnetPacket[104] << 4;
 			// BindIndex, ShortName, LongName, Command are ignored
 			incomingUniverse = (netswitch << 8) | (subswitch | universe);
+			// update Art-Net reply
+			ArtPollReply.net = netswitch;
+			ArtPollReply.sub = artnetPacket[104];
+			ArtPollReply.swin[port] = artnetPacket[100] >> 4;
+			ArtPollReply.swout[port] = artnetPacket[100] >> 4;
 			
 			Udp.beginPacket(BCaddress, ART_NET_PORT);
 			Udp.write((uint8_t *)&ArtPollReply, sizeof(ArtPollReply));
@@ -428,8 +425,8 @@ uint8_t ArtNet_write_nzs( uint8_t stamp, uint8_t frame_ID, uint8_t nzsFrame[PAYL
 	ArtNzs.sequence 	= stamp;
 	ArtNzs.startCode 	= frame_ID;
 	ArtNzs.portAddress 	= 0;
-	ArtNzs.nzsDataLenght = PAYLOAD << 8;
-	for( uint8_t i = 0; i < PAYLOAD; i++ ){
+	ArtNzs.nzsDataLenght = ((uint8_t)PAYLOAD << 8) | (PAYLOAD >> 8);
+	for( uint16_t i = 0; i < PAYLOAD; i++ ){
 		ArtNzs.nzsData[i] = nzsFrame[i];
 	}
 
